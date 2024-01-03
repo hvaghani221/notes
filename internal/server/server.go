@@ -8,19 +8,20 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+
 	"notes/internal/database"
 )
 
 type Server struct {
 	port int
-	db   database.Service
+	db   *database.Queries
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
 		port: port,
-		db:   database.New(),
+		db:   database.Init(),
 	}
 
 	// Declare Server config

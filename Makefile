@@ -1,10 +1,17 @@
-# Simple Makefile for a Go project
+#!make
+include .env
+DB_URL=postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=disable
+
+
+.PHONY: all build run test clean migrate-up migrate-down
+
 
 # Build the application
 all: build
 
 build:
 	@echo "Building..."
+	@sqlc generate
 	@go build -o main cmd/api/main.go
 
 # Run the application
@@ -39,6 +46,16 @@ clean:
 	@echo "Cleaning..."
 	@rm -f main
 
+
+migrate-up:
+	@echo "Up migrating..."
+	@echo "$(DB_URL)"
+	@goose -dir sql/schema postgres "$(DB_URL)" up
+
+migrate-down:
+	@echo "Down migrating..."
+	@goose -dir sql/schema postgres "$(DB_URL)" down
+
 # Live Reload
 watch:
 	@if command -v air > /dev/null; then \
@@ -56,4 +73,3 @@ watch:
 	    fi; \
 	fi
 
-.PHONY: all build run test clean
