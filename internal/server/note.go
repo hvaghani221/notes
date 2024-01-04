@@ -118,3 +118,15 @@ func (s *Server) ShareNote(c echo.Context) error {
 
 	return nil
 }
+
+func (s *Server) SearchNotes(c echo.Context) error {
+	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
+	query := c.QueryParam("q")
+
+	notes, err := s.repository.SearchNotes(c.Request().Context(), userID, query)
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, notes)
+}

@@ -40,6 +40,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 	notes.DELETE("/:id", s.DeleteNote)
 	notes.POST("/:id/share", s.ShareNote)
 
+	notes.GET("/search", s.SearchNotes)
+
 	return e
 }
 

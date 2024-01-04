@@ -114,6 +114,48 @@ func (q *Queries) ListNotesByUserID(ctx context.Context, userID int32) ([]Note, 
 	return items, nil
 }
 
+const searchNotes = `-- name: SearchNotes :many
+SELECT n.id, n.user_id, n.title, n.content, n.created_at, n.updated_at
+FROM notes n
+LEFT JOIN shared_notes sn ON n.id = sn.note_id
+WHERE (n.user_id = $1 OR sn.shared_with_user_id = $1) AND to_tsvector('english', n.content) @@ plainto_tsquery('english', $2)
+`
+
+type SearchNotesParams struct {
+	UserID         int32
+	PlaintoTsquery string
+}
+
+func (q *Queries) SearchNotes(ctx context.Context, arg SearchNotesParams) ([]Note, error) {
+	rows, err := q.db.QueryContext(ctx, searchNotes, arg.UserID, arg.PlaintoTsquery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Note
+	for rows.Next() {
+		var i Note
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const shareNote = `-- name: ShareNote :one
 INSERT INTO shared_notes (note_id, shared_with_user_id)
 SELECT $1, users.id

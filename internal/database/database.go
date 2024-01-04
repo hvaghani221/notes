@@ -154,6 +154,25 @@ func (r *Repository) ShareNote(ctx context.Context, share model.NoteShareDTO) er
 	return err
 }
 
+func (r *Repository) SearchNotes(ctx context.Context, id int32, query string) ([]model.Note, error) {
+	fmt.Println("searching notes", id, query)
+	dbNotes, err := r.queries.SearchNotes(ctx, generated.SearchNotesParams{
+		UserID:         id,
+		PlaintoTsquery: query,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	notes := make([]model.Note, 0, len(dbNotes))
+
+	for _, dbNote := range dbNotes {
+		notes = append(notes, dbNoteToNote(dbNote))
+	}
+
+	return notes, nil
+}
+
 func New() *Repository {
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 	db, err := sql.Open("pgx", dbURL)
