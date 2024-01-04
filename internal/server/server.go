@@ -10,18 +10,19 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"notes/internal/database"
+	"notes/internal/repository"
 )
 
 type Server struct {
-	port int
-	db   *database.Queries
+	port       int
+	repository repository.Repository
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
-		port: port,
-		db:   database.Init(),
+		port:       port,
+		repository: database.New(),
 	}
 
 	// Declare Server config

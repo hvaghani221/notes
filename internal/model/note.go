@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"notes/internal/database"
 )
 
 type Note struct {
@@ -15,13 +13,8 @@ type Note struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NoteFromDB(dbNote database.Note) Note {
-	return Note{
-		ID:        dbNote.ID,
-		UserID:    dbNote.UserID,
-		Title:     dbNote.Title,
-		Content:   dbNote.Content,
-		CreatedAt: dbNote.CreatedAt.Time,
-		UpdatedAt: dbNote.UpdatedAt.Time,
-	}
+type NoteDTO struct {
+	UserID  int32  `json:"-"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
