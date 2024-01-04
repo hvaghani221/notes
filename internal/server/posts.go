@@ -1,18 +1,19 @@
 package server
 
 import (
-	"log"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 
 	"notes/internal/database"
 	"notes/internal/model"
 )
 
-type createNoteDTO struct {
+type noteDTO struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
@@ -20,9 +21,7 @@ type createNoteDTO struct {
 func (s *Server) ListNotes(c echo.Context) error {
 	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
 
-	log.Println("userID: ", userID)
-
-	notes, err := s.db.GetNotesByUserID(c.Request().Context(), pgtype.Int4{Int32: userID, Valid: true})
+	notes, err := s.db.ListNotesByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}
@@ -35,23 +34,36 @@ func (s *Server) ListNotes(c echo.Context) error {
 }
 
 func (s *Server) GetNote(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
+	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
+	noteID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrBadRequest
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	dbNote, err := s.db.GetNoteByUserID(c.Request().Context(), database.GetNoteByUserIDParams{
+		ID:     int32(noteID),
+		UserID: userID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return echo.ErrNotFound
+		}
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, model.NoteFromDB(dbNote))
 }
 
 func (s *Server) CreateNote(c echo.Context) error {
 	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
 
-	var noteDTO createNoteDTO
+	var noteDTO noteDTO
 	if err := c.Bind(&noteDTO); err != nil {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	dbNote, err := s.db.CreatNote(c.Request().Context(), database.CreatNoteParams{
-		UserID:  pgtype.Int4{Int32: userID, Valid: true},
+		UserID:  userID,
 		Title:   noteDTO.Title,
 		Content: noteDTO.Content,
 	})
@@ -63,17 +75,45 @@ func (s *Server) CreateNote(c echo.Context) error {
 }
 
 func (s *Server) UpdateNote(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
+	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
+	noteID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrBadRequest
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	var noteDTO noteDTO
+	if err := c.Bind(&noteDTO); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	dbNote, err := s.db.UpdateNote(c.Request().Context(), database.UpdateNoteParams{
+		ID:      int32(noteID),
+		UserID:  userID,
+		Title:   noteDTO.Title,
+		Content: noteDTO.Content,
+	})
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, model.NoteFromDB(dbNote))
 }
 
 func (s *Server) DeleteNote(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
+	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
+	noteID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrBadRequest
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	err = s.db.DeleteNote(c.Request().Context(), database.DeleteNoteParams{
+		ID:     int32(noteID),
+		UserID: userID,
+	})
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
 }

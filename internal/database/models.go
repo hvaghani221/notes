@@ -10,7 +10,7 @@ import (
 
 type Note struct {
 	ID        int32
-	UserID    pgtype.Int4
+	UserID    int32
 	Title     string
 	Content   string
 	CreatedAt pgtype.Timestamp

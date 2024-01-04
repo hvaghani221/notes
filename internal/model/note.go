@@ -18,7 +18,7 @@ type Note struct {
 func NoteFromDB(dbNote database.Note) Note {
 	return Note{
 		ID:        dbNote.ID,
-		UserID:    dbNote.UserID.Int32,
+		UserID:    dbNote.UserID,
 		Title:     dbNote.Title,
 		Content:   dbNote.Content,
 		CreatedAt: dbNote.CreatedAt.Time,

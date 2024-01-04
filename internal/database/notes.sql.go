@@ -7,8 +7,6 @@ package database
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const creatNote = `-- name: CreatNote :one
@@ -18,7 +16,7 @@ RETURNING id, user_id, title, content, created_at, updated_at
 `
 
 type CreatNoteParams struct {
-	UserID  pgtype.Int4
+	UserID  int32
 	Title   string
 	Content string
 }
@@ -37,13 +35,52 @@ func (q *Queries) CreatNote(ctx context.Context, arg CreatNoteParams) (Note, err
 	return i, err
 }
 
-const getNotesByUserID = `-- name: GetNotesByUserID :many
+const deleteNote = `-- name: DeleteNote :exec
+DELETE FROM notes
+WHERE id = $1 AND user_id = $2
+`
+
+type DeleteNoteParams struct {
+	ID     int32
+	UserID int32
+}
+
+func (q *Queries) DeleteNote(ctx context.Context, arg DeleteNoteParams) error {
+	_, err := q.db.Exec(ctx, deleteNote, arg.ID, arg.UserID)
+	return err
+}
+
+const getNoteByUserID = `-- name: GetNoteByUserID :one
+SELECT id, user_id, title, content, created_at, updated_at FROM notes
+WHERE id = $1 AND user_id = $2
+`
+
+type GetNoteByUserIDParams struct {
+	ID     int32
+	UserID int32
+}
+
+func (q *Queries) GetNoteByUserID(ctx context.Context, arg GetNoteByUserIDParams) (Note, error) {
+	row := q.db.QueryRow(ctx, getNoteByUserID, arg.ID, arg.UserID)
+	var i Note
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Title,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listNotesByUserID = `-- name: ListNotesByUserID :many
 SELECT id, user_id, title, content, created_at, updated_at FROM notes
 WHERE user_id = $1
 `
 
-func (q *Queries) GetNotesByUserID(ctx context.Context, userID pgtype.Int4) ([]Note, error) {
-	rows, err := q.db.Query(ctx, getNotesByUserID, userID)
+func (q *Queries) ListNotesByUserID(ctx context.Context, userID int32) ([]Note, error) {
+	rows, err := q.db.Query(ctx, listNotesByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,4 +104,37 @@ func (q *Queries) GetNotesByUserID(ctx context.Context, userID pgtype.Int4) ([]N
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateNote = `-- name: UpdateNote :one
+UPDATE notes
+SET title = $2, content = $3, updated_at = now()
+WHERE id = $1 AND user_id = $4
+RETURNING id, user_id, title, content, created_at, updated_at
+`
+
+type UpdateNoteParams struct {
+	ID      int32
+	Title   string
+	Content string
+	UserID  int32
+}
+
+func (q *Queries) UpdateNote(ctx context.Context, arg UpdateNoteParams) (Note, error) {
+	row := q.db.QueryRow(ctx, updateNote,
+		arg.ID,
+		arg.Title,
+		arg.Content,
+		arg.UserID,
+	)
+	var i Note
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Title,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
