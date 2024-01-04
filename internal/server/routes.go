@@ -2,14 +2,21 @@ package server
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
+	_ "github.com/joho/godotenv/autoload"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/time/rate"
 )
 
-var signInKey = []byte("secret")
+var (
+	signInKey = os.Getenv("SIGN_IN_KEY")
+	rateLimit = os.Getenv("RATE_LIMIT")
+)
 
 type jwtClaim struct {
 	jwt.RegisteredClaims
@@ -19,8 +26,14 @@ type jwtClaim struct {
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 
+	rateLimitInt, err := strconv.Atoi(rateLimit)
+	if err != nil {
+		rateLimitInt = 100
+	}
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(rateLimitInt))))
 
 	users := e.Group("/api/auth")
 	users.POST("/signup", s.CreateUser)
@@ -52,7 +65,3 @@ func (s *Server) HelloWorldHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp)
 }
-
-// func (s *Server) healthHandler(c echo.Context) error {
-// 	return c.JSON(http.StatusOK, s.db.Health())
-// }
