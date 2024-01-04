@@ -143,6 +143,17 @@ func (r *Repository) DeleteNote(ctx context.Context, noteID, userID int32) error
 	})
 }
 
+func (r *Repository) ShareNote(ctx context.Context, share model.NoteShareDTO) error {
+	fmt.Println("sharing note", share)
+	_, err := r.queries.ShareNote(ctx, generated.ShareNoteParams{
+		Noteid:          share.NoteID,
+		Userid:          share.UserID,
+		Sharedwithemail: share.SharedWith,
+	})
+
+	return err
+}
+
 func New() *Repository {
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 	db, err := sql.Open("pgx", dbURL)

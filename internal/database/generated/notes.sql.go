@@ -51,8 +51,10 @@ func (q *Queries) DeleteNote(ctx context.Context, arg DeleteNoteParams) error {
 }
 
 const getNoteByUserID = `-- name: GetNoteByUserID :one
-SELECT id, user_id, title, content, created_at, updated_at FROM notes
-WHERE id = $1 AND user_id = $2
+SELECT n.id, n.user_id, n.title, n.content, n.created_at, n.updated_at
+FROM notes n
+LEFT JOIN shared_notes sn ON n.id = sn.note_id
+WHERE (n.id = $1) AND (n.user_id = $2 OR sn.shared_with_user_id = $2)
 `
 
 type GetNoteByUserIDParams struct {
@@ -75,8 +77,11 @@ func (q *Queries) GetNoteByUserID(ctx context.Context, arg GetNoteByUserIDParams
 }
 
 const listNotesByUserID = `-- name: ListNotesByUserID :many
-SELECT id, user_id, title, content, created_at, updated_at FROM notes
-WHERE user_id = $1
+SELECT n.id, n.user_id, n.title, n.content, n.created_at, n.updated_at
+FROM notes n
+LEFT JOIN shared_notes sn ON n.id = sn.note_id
+WHERE n.user_id = $1 OR sn.shared_with_user_id = $1
+ORDER BY n.created_at DESC
 `
 
 func (q *Queries) ListNotesByUserID(ctx context.Context, userID int32) ([]Note, error) {
@@ -107,6 +112,27 @@ func (q *Queries) ListNotesByUserID(ctx context.Context, userID int32) ([]Note, 
 		return nil, err
 	}
 	return items, nil
+}
+
+const shareNote = `-- name: ShareNote :one
+INSERT INTO shared_notes (note_id, shared_with_user_id)
+SELECT $1, users.id
+FROM users
+WHERE email = $2 AND EXISTS (SELECT 1 FROM notes WHERE id = $1 AND user_id = $3)
+RETURNING note_id, shared_with_user_id
+`
+
+type ShareNoteParams struct {
+	Noteid          int32
+	Sharedwithemail string
+	Userid          int32
+}
+
+func (q *Queries) ShareNote(ctx context.Context, arg ShareNoteParams) (SharedNote, error) {
+	row := q.db.QueryRowContext(ctx, shareNote, arg.Noteid, arg.Sharedwithemail, arg.Userid)
+	var i SharedNote
+	err := row.Scan(&i.NoteID, &i.SharedWithUserID)
+	return i, err
 }
 
 const updateNote = `-- name: UpdateNote :one

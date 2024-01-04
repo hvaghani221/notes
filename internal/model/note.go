@@ -18,3 +18,9 @@ type NoteDTO struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
+
+type NoteShareDTO struct {
+	NoteID     int32  `param:"note_id" json:"-"`
+	UserID     int32  `json:"-"`
+	SharedWith string `json:"shared_with"`
+}

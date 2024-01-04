@@ -17,6 +17,7 @@ type NoteRepository interface {
 	GetNoteByUserID(ctx context.Context, noteID, userID int32) (model.Note, error)
 	UpdateNote(context.Context, int32, model.NoteDTO) (model.Note, error)
 	DeleteNote(ctx context.Context, noteID, userID int32) error
+	ShareNote(context.Context, model.NoteShareDTO) error
 }
 
 type Repository interface {

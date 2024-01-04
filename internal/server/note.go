@@ -95,3 +95,26 @@ func (s *Server) DeleteNote(c echo.Context) error {
 
 	return c.NoContent(http.StatusOK)
 }
+
+func (s *Server) ShareNote(c echo.Context) error {
+	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
+	noteID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.ErrBadRequest
+	}
+
+	var noteShareDTO model.NoteShareDTO
+	if err := c.Bind(&noteShareDTO); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	noteShareDTO.NoteID = int32(noteID)
+	noteShareDTO.UserID = userID
+
+	err = s.repository.ShareNote(c.Request().Context(), noteShareDTO)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}

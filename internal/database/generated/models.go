@@ -18,6 +18,11 @@ type Note struct {
 	UpdatedAt time.Time
 }
 
+type SharedNote struct {
+	NoteID           int32
+	SharedWithUserID int32
+}
+
 type User struct {
 	ID           int32
 	Username     string

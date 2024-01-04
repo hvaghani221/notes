@@ -38,6 +38,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	notes.POST("/", s.CreateNote)
 	notes.PUT("/:id", s.UpdateNote)
 	notes.DELETE("/:id", s.DeleteNote)
+	notes.POST("/:id/share", s.ShareNote)
 
 	return e
 }
