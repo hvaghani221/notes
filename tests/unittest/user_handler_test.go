@@ -45,7 +45,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "test@example.com",
 				Password: "Secure@Passwprd123",
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 			expectError:    false,
 		},
 		{
@@ -110,7 +110,7 @@ func TestRateLimit(t *testing.T) {
 
 	e.ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.Equal(t, http.StatusCreated, rec.Code, rec.Body.String())
 
 	// Second request should be rate limited
 	req = httptest.NewRequest(http.MethodPost, "/api/auth/signup", bytes.NewBuffer(jsonBody))

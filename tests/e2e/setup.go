@@ -62,10 +62,7 @@ func setup(e *httpexpect.Expect) error {
 	}
 
 	for _, user := range users {
-		e.POST("/api/auth/signup").WithJSON(user).Expect().Status(http.StatusOK)
-		// if _, err := repo.CreateUser(context.Background(), user); err != nil {
-		// 	return fmt.Errorf("error creating user: %v", err)
-		// }
+		e.POST("/api/auth/signup").WithJSON(user).Expect().Status(http.StatusCreated)
 	}
 
 	return nil

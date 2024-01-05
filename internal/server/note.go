@@ -19,6 +19,7 @@ func (s *Server) ListNotes(c echo.Context) error {
 
 	notes, err := s.Repository.ListNotesByUserID(c.Request().Context(), userID)
 	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to list notes for user[%d]: %w", userID, err))
 		return echo.ErrInternalServerError
 	}
 
@@ -60,10 +61,11 @@ func (s *Server) CreateNote(c echo.Context) error {
 
 	note, err := s.Repository.CreateNote(c.Request().Context(), noteDTO)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		c.Logger().Error(fmt.Errorf("failed to create note: %w", err))
+		return echo.ErrInternalServerError
 	}
 
-	return c.JSON(http.StatusOK, note)
+	return c.JSON(http.StatusCreated, note)
 }
 
 func (s *Server) UpdateNote(c echo.Context) error {
@@ -82,7 +84,11 @@ func (s *Server) UpdateNote(c echo.Context) error {
 
 	note, err := s.Repository.UpdateNote(c.Request().Context(), int32(noteID), noteDTO)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, repository.ErrNotFound) {
+			return echo.ErrNotFound
+		}
+		c.Logger().Error(fmt.Errorf("failed to update note[%d]: %w", noteID, err))
+		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, note)
@@ -101,6 +107,7 @@ func (s *Server) DeleteNote(c echo.Context) error {
 		if errors.Is(err, repository.ErrNotFound) {
 			return echo.ErrForbidden
 		}
+		c.Logger().Error(fmt.Errorf("failed to delete note[%d]: %w", noteID, err))
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
@@ -127,7 +134,11 @@ func (s *Server) ShareNote(c echo.Context) error {
 
 	err = s.Repository.ShareNote(c.Request().Context(), noteShareDTO)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		if errors.Is(err, repository.ErrNotFound) {
+			return echo.ErrForbidden
+		}
+		c.Logger().Error(fmt.Errorf("failed to share note[%d]: %w", noteID, err))
+		return echo.ErrInternalServerError
 	}
 
 	return nil
@@ -139,8 +150,8 @@ func (s *Server) SearchNotes(c echo.Context) error {
 
 	notes, err := s.Repository.SearchNotes(c.Request().Context(), userID, query)
 	if err != nil {
+		c.Logger().Error(fmt.Errorf("failed to search notes for user[%d], query[%s]: %w", userID, query, err))
 		return echo.ErrInternalServerError
 	}
-
 	return c.JSON(http.StatusOK, notes)
 }

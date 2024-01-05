@@ -59,7 +59,7 @@ func TestPost(t *testing.T) {
 	note1 := e.POST("/api/notes/").WithHeader("Authorization", "Bearer "+user1_token).WithJSON(model.NoteDTO{
 		Title:   "title 1",
 		Content: "description 1",
-	}).Expect().Status(http.StatusOK).JSON().Object()
+	}).Expect().Status(http.StatusCreated).JSON().Object()
 
 	note1_id := int(note1.Value("id").Number().Raw())
 
@@ -84,12 +84,12 @@ func TestPost(t *testing.T) {
 	e.POST("/api/notes/").WithHeader("Authorization", "Bearer "+user1_token).WithJSON(model.NoteDTO{
 		Title:   "title 2",
 		Content: "description 2 with some long text",
-	}).Expect().Status(http.StatusOK)
+	}).Expect().Status(http.StatusCreated)
 
 	e.POST("/api/notes/").WithHeader("Authorization", "Bearer "+user1_token).WithJSON(model.NoteDTO{
 		Title:   "title 3",
 		Content: "description 3 with some long text",
-	}).Expect().Status(http.StatusOK)
+	}).Expect().Status(http.StatusCreated)
 
 	e.GET("/api/notes/search").WithQuery("q", "with text").WithHeader("Authorization", "Bearer "+user1_token).Expect().Status(http.StatusOK).JSON().Array().Length().IsEqual(2)
 

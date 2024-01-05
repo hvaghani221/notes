@@ -39,7 +39,7 @@ db-down:
 # Test the application
 unittest:
 	@echo "Testing..."
-	@go test -v  $$(go list ./... | grep -v e2e)
+	@go clean -testcache && go test -v  $$(go list ./... | grep -v e2e)
 
 e2e:
 	@echo "Running end-to-end tests..."
@@ -48,7 +48,7 @@ e2e:
 	@./main & PID=$$!; \
 	 echo "Started main with PID $$PID"; \
 	 sleep 2; \
-	 go test -v ./tests/e2e/...; \
+	 go clean -testcache && go test -v ./tests/e2e/...; \
 	 echo "Killing PID $$PID"; \
 	 kill $$PID || echo "Could not kill process";
 	@make clean

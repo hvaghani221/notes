@@ -31,7 +31,7 @@ func (s *Server) CreateUser(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusCreated, user)
 }
 
 func (s *Server) LogIn(c echo.Context) error {
