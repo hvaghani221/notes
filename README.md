@@ -1,19 +1,19 @@
 ## Technologies Used
 
-- [Golang](https://go.dev/): It is efficient, simple and easy to scale. It can be easily containerized since go compiler builds a standalone executable file.
+- [Golang](https://go.dev/): It is efficient, simple and easy to scale. It can be easily containerized since the go compiler builds a standalone executable file.
 - [Echo](https://github.com/labstack/echo): It is a minimalist http router library with some prebuilt HTTP middleware handlers.
-- PostgreSQL: It's open source production ready database with good feature set. It has several popular index types including [GIN](https://www.postgresql.org/docs/current/gin-intro.html) index. A GIN index efficiently accelerates searches, particularly useful for quickly finding notes based on keywords in your text search functionality.
-- [sqlc](https://docs.sqlc.dev/en/stable/index.html): sqlc generates fully type-safe idiomatic Go code from SQL. It is an alternative of using opinionated ORMs.
+- PostgreSQL: It's an open source production-ready database with good feature set. It has several popular index types including [GIN](https://www.postgresql.org/docs/current/gin-intro.html) index. A GIN index efficiently accelerates searches, particularly useful for quickly finding notes based on keywords in your text search functionality.
+- [sqlc](https://docs.sqlc.dev/en/stable/index.html): sqlc generates fully type-safe idiomatic Go code from SQL. It is an alternative to using opinionated ORMs.
 - [Goose](https://github.com/pressly/goose): Database migration tool that works well with sqlc
 
 ## How to use
 
-1. Update .env file or use the default value and export them
-2. Start the postgresql database using `make db-up`
-3. Install go compiler if not already.
+1. Update the .env file or use the default value and export them
+2. Start the Postgresql database using `make db-up`
+3. Install the go compiler if not already.
 4. Install necessary tools using `make tools`
 5. Migrate db using `make migrate-up`
-6. Execute application using `make run`
+6. Execute the application using `make run`
 
 ## How to test
 
@@ -21,18 +21,18 @@
 1. Run `make unittest`
 
 ### end-to-end test
-1. Export the env variables from .env file
+1. Export the env variables from the .env file
 2. Run `make e2e`
 
-NOTE: Alhough the written tests are very basic, it doesn't cover all cases, I have written both unit and e2e tests for opensource products. Please checkout [unittest](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/14699) and [e2e test](https://github.com/splunk/splunk-connect-for-kubernetes/pull/707)
+NOTE: The written tests are very basic it doesn't cover all cases because of the time constraints. But, I have written both unit and e2e tests for open-source projects. Please check out [unittest](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/14699) and [e2e test](https://github.com/splunk/splunk-connect-for-kubernetes/pull/707).
 
 
 ### Further Improvements
 - The server currently in-memory store is used for rate-limiting. It makes the application stateful. To scale up the application, [redis](https://redis.io/) can be used to store the data related to rate-limiting. It makes the server stateless and can be easily scaled horizontally.
-- The application is executed directly, but it can be easily containerized. It makes the deployment process relativley easy when using container orchestration tools like Kubernetes.
-- There is no mechanism for token expiry. We can create new table to keep track of active token, and use use caching mechanism to efficiently check if the token is valid. A new endpoint `/api/auth/logout` can be introduced that invalidates the cache.
+- The application is executed directly, but it can be easily containerized. It makes the deployment process relatively easy when using container orchestration tools like Kubernetes.
+- There is no mechanism for token expiry. We can create a new table to keep track of active tokens and use the caching mechanism to efficiently check if the token is valid. A new endpoint `/api/auth/logout` can be introduced that invalidates the cache.
 - The current server serves HTTP traffic. We can enable HTTPS by adding SSL certificates(either self-signed or issued from a known certificate authority)
-- We can improve the observability by adding more logs(not done already due to time constraints), performance metrics(like CPU/memorry usage, response time, throughput), database metrics(like performance of sql queries, connection pool stats etc) and application level metrics(like auth, error etc), and tracing. We can leverage tools like prometheus and opentelemetry to collect and export these data.
+- We can improve the observability by adding more logs(not done already due to time constraints), performance metrics(like CPU/memory usage, response time, throughput), database metrics(like the performance of SQL queries, connection pool stats, etc) and application-level metrics(like auth, error, etc), and tracing. We can leverage tools like Prometheus and Opentelemetry to collect and export these data.
 - Can add more unit and integration tests(not done already due to time constraints)
 
 ## Endpoints
