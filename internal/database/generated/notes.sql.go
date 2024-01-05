@@ -35,9 +35,10 @@ func (q *Queries) CreatNote(ctx context.Context, arg CreatNoteParams) (Note, err
 	return i, err
 }
 
-const deleteNote = `-- name: DeleteNote :exec
+const deleteNote = `-- name: DeleteNote :one
 DELETE FROM notes
 WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, title, content, created_at, updated_at
 `
 
 type DeleteNoteParams struct {
@@ -45,9 +46,18 @@ type DeleteNoteParams struct {
 	UserID int32
 }
 
-func (q *Queries) DeleteNote(ctx context.Context, arg DeleteNoteParams) error {
-	_, err := q.db.ExecContext(ctx, deleteNote, arg.ID, arg.UserID)
-	return err
+func (q *Queries) DeleteNote(ctx context.Context, arg DeleteNoteParams) (Note, error) {
+	row := q.db.QueryRowContext(ctx, deleteNote, arg.ID, arg.UserID)
+	var i Note
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Title,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getNoteByUserID = `-- name: GetNoteByUserID :one

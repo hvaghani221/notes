@@ -1,10 +1,6 @@
 package server
 
 import (
-	"net/http"
-	"os"
-	"strconv"
-
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/joho/godotenv/autoload"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -13,27 +9,17 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var (
-	signInKey = os.Getenv("SIGN_IN_KEY")
-	rateLimit = os.Getenv("RATE_LIMIT")
-)
-
 type jwtClaim struct {
 	jwt.RegisteredClaims
 	ID int32 `json:"id"`
 }
 
-func (s *Server) RegisterRoutes() http.Handler {
+func (s *Server) RegisterRoutes() *echo.Echo {
 	e := echo.New()
-
-	rateLimitInt, err := strconv.Atoi(rateLimit)
-	if err != nil {
-		rateLimitInt = 100
-	}
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(rateLimitInt))))
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(s.Config.RateLimit))))
 
 	users := e.Group("/api/auth")
 	users.POST("/signup", s.CreateUser)
@@ -41,7 +27,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	notes := e.Group("/api/notes")
 	notes.Use(echojwt.WithConfig(echojwt.Config{
-		SigningKey: signInKey,
+		SigningKey: []byte(s.Config.SignInKey),
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(jwtClaim)
 		},
@@ -56,12 +42,4 @@ func (s *Server) RegisterRoutes() http.Handler {
 	notes.GET("/search", s.SearchNotes)
 
 	return e
-}
-
-func (s *Server) HelloWorldHandler(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
-	}
-
-	return c.JSON(http.StatusOK, resp)
 }

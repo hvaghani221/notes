@@ -7,9 +7,9 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 
 	"notes/internal/model"
+	"notes/internal/validator"
 )
 
 func (s *Server) CreateUser(c echo.Context) error {
@@ -18,16 +18,15 @@ func (s *Server) CreateUser(c echo.Context) error {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	// TODO: validation
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+	if err := validator.Email(userDTO.Email); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	fmt.Printf("signup password hash: %s\n", string(hash))
+	if err := validator.Password(userDTO.Password); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
 
-	user, err := s.repository.CreateUser(c.Request().Context(), userDTO)
+	user, err := s.Repository.CreateUser(c.Request().Context(), userDTO)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -41,9 +40,14 @@ func (s *Server) LogIn(c echo.Context) error {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := s.repository.GetUserByEmailAndPassword(c.Request().Context(), login)
+	if err := validator.Email(login.Email); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	user, err := s.Repository.GetUserByEmailAndPassword(c.Request().Context(), login)
 	if err != nil {
-		return c.String(http.StatusUnauthorized, err.Error())
+		c.Logger().Error(fmt.Errorf("failed to get user[%s]: %w", login.Email, err))
+		return echo.ErrUnauthorized
 	}
 
 	claims := &jwtClaim{
@@ -55,9 +59,9 @@ func (s *Server) LogIn(c echo.Context) error {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString(signInKey)
+	tokenString, err := token.SignedString([]byte(s.Config.SignInKey))
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{

@@ -22,9 +22,10 @@ SET title = $2, content = $3, updated_at = now()
 WHERE id = $1 AND user_id = $4
 RETURNING *;
 
--- name: DeleteNote :exec
+-- name: DeleteNote :one
 DELETE FROM notes
-WHERE id = $1 AND user_id = $2;
+WHERE id = $1 AND user_id = $2
+RETURNING *;
 
 -- name: ShareNote :one
 INSERT INTO shared_notes (note_id, shared_with_user_id)

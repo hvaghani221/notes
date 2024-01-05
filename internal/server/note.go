@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,12 +10,14 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"notes/internal/model"
+	"notes/internal/repository"
+	"notes/internal/validator"
 )
 
 func (s *Server) ListNotes(c echo.Context) error {
 	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
 
-	notes, err := s.repository.ListNotesByUserID(c.Request().Context(), userID)
+	notes, err := s.Repository.ListNotesByUserID(c.Request().Context(), userID)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}
@@ -32,9 +36,13 @@ func (s *Server) GetNote(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	note, err := s.repository.GetNoteByUserID(c.Request().Context(), int32(noteID), userID)
+	note, err := s.Repository.GetNoteByUserID(c.Request().Context(), int32(noteID), userID)
 	if err != nil {
-		return echo.ErrNotFound
+		if errors.Is(err, repository.ErrNotFound) {
+			return echo.ErrNotFound
+		}
+		c.Logger().Error(fmt.Errorf("failed to get note[%d]: %w", noteID, err))
+		return echo.ErrInternalServerError
 	}
 
 	return c.JSON(http.StatusOK, note)
@@ -50,7 +58,7 @@ func (s *Server) CreateNote(c echo.Context) error {
 
 	noteDTO.UserID = userID
 
-	note, err := s.repository.CreateNote(c.Request().Context(), noteDTO)
+	note, err := s.Repository.CreateNote(c.Request().Context(), noteDTO)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -72,7 +80,7 @@ func (s *Server) UpdateNote(c echo.Context) error {
 
 	noteDTO.UserID = userID
 
-	note, err := s.repository.UpdateNote(c.Request().Context(), int32(noteID), noteDTO)
+	note, err := s.Repository.UpdateNote(c.Request().Context(), int32(noteID), noteDTO)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -87,9 +95,12 @@ func (s *Server) DeleteNote(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 
-	err = s.repository.DeleteNote(c.Request().Context(), int32(noteID), userID)
+	err = s.Repository.DeleteNote(c.Request().Context(), int32(noteID), userID)
 
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return echo.ErrForbidden
+		}
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
@@ -108,10 +119,13 @@ func (s *Server) ShareNote(c echo.Context) error {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
+	if err := validator.Email(noteShareDTO.SharedWith); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
 	noteShareDTO.NoteID = int32(noteID)
 	noteShareDTO.UserID = userID
 
-	err = s.repository.ShareNote(c.Request().Context(), noteShareDTO)
+	err = s.Repository.ShareNote(c.Request().Context(), noteShareDTO)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -123,7 +137,7 @@ func (s *Server) SearchNotes(c echo.Context) error {
 	userID := c.Get("user").(*jwt.Token).Claims.(*jwtClaim).ID
 	query := c.QueryParam("q")
 
-	notes, err := s.repository.SearchNotes(c.Request().Context(), userID, query)
+	notes, err := s.Repository.SearchNotes(c.Request().Context(), userID, query)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}

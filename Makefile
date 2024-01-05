@@ -3,7 +3,7 @@ include .env
 DB_URL=postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_DATABASE)?sslmode=disable
 
 
-.PHONY: all build run test clean migrate-up migrate-down
+.PHONY: all build run unittest clean migrate-up migrate-down
 
 
 # Build the application
@@ -16,7 +16,7 @@ build:
 
 # Run the application
 run:
-	@go run cmd/api/main.go
+	@go run main.go
 
 # Create DB container
 docker-run:
@@ -37,9 +37,13 @@ docker-down:
 	fi
 
 # Test the application
-test:
+unittest:
 	@echo "Testing..."
-	@go test ./tests -v
+	@go test -v  $$(go list ./... | grep -v e2e)
+
+e2e:
+	@echo "E2E Testing..."
+	@go test -v ./tests/e2e/...
 
 # Clean the binary
 clean:
