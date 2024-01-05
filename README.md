@@ -24,7 +24,7 @@
 1. Export the env variables from the .env file
 2. Run `make e2e`
 
-NOTE: The written tests are very basic it doesn't cover all cases because of the time constraints. But, I have written both unit and e2e tests for open-source projects. Please check out [unittest](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/14699) and [e2e test](https://github.com/splunk/splunk-connect-for-kubernetes/pull/707).
+NOTE: The written tests are very basic it doesn't cover all cases because of the time constraints. But, I have experience in writing both unit and e2e tests for open-source projects. Please check out [unittest](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/14699) and [e2e test](https://github.com/splunk/splunk-connect-for-kubernetes/pull/707).
 
 
 ### Further Improvements
