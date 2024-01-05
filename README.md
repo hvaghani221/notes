@@ -1,7 +1,3 @@
-# Project notes
-
-One Paragraph of project description goes here
-
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -33,14 +29,14 @@ Shutdown DB container
 make docker-down
 ```
 
-live reload the application
+run unit test 
 ```bash
-make watch
+make unittest
 ```
 
-run the test suite
+run e2e test
 ```bash
-make test
+make e2e
 ```
 
 clean up binary from the last build
