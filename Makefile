@@ -42,16 +42,8 @@ unittest:
 	@go clean -testcache && go test -v  $$(go list ./... | grep -v e2e)
 
 e2e:
-	@echo "Running end-to-end tests..."
-	@make build
-	@make migrate-up
-	@./main & PID=$$!; \
-	 echo "Started main with PID $$PID"; \
-	 sleep 2; \
-	 go clean -testcache && go test -v ./tests/e2e/...; \
-	 echo "Killing PID $$PID"; \
-	 kill $$PID || echo "Could not kill process";
-	@make clean
+	@chmod +x e2e.sh
+	@./e2e.sh
 
 # Clean the binary
 clean:

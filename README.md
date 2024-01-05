@@ -24,6 +24,8 @@
 1. Export the env variables from .env file
 2. Run `make e2e`
 
+NOTE: Alhough the written tests are very basic, it doesn't cover all cases, I have written both unit and e2e tests for opensource products. Please checkout [unittest](https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/14699) and [e2e test](https://github.com/splunk/splunk-connect-for-kubernetes/pull/707)
+
 
 ### Further Improvements
 - The server currently in-memory store is used for rate-limiting. It makes the application stateful. To scale up the application, [redis](https://redis.io/) can be used to store the data related to rate-limiting. It makes the server stateless and can be easily scaled horizontally.
