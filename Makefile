@@ -48,7 +48,7 @@ e2e:
 	@./main & PID=$$!; \
 	 echo "Started main with PID $$PID"; \
 	 sleep 2; \
-	 source .env && go test -v ./tests/e2e/...; \
+	 go test -v ./tests/e2e/...; \
 	 echo "Killing PID $$PID"; \
 	 kill $$PID || echo "Could not kill process";
 	@make clean

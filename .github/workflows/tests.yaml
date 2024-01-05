@@ -44,3 +44,13 @@ jobs:
     - name: Run e2e tests
       run: |
         make e2e
+      env: 
+        PORT: 8080
+        APP_ENV: local
+        RATE_LIMIT: 100
+        SIGNIN_KEY: secret
+        DB_DATABASE: myappdb
+        DB_USERNAME: admin
+        DB_PASSWORD: securepassword123
+        DB_HOST: localhost
+        DB_PORT: 5432
